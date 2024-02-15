@@ -1,29 +1,30 @@
-use std::{f64, ops::{Add, Div, Mul, Sub}};
+use std::{f64, ops::{Add, Div, Mul, Neg, Sub}};
 
-struct Vec3 {
-    x: f64,
-    y: f64,
-    z: f64
+#[derive(Clone, Copy)]
+pub struct Vec3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64
 }
 
 impl Vec3 {
-    fn new(x: f64, y: f64, z: f64) -> Vec3 {
+    pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
         Vec3 { x, y, z }
     }
 
-    fn length_squared(&self) -> f64 {
+    pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    fn length(&self) -> f64 {
+    pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
 
-    fn dot(&self, rhs: Vec3) -> f64 {
+    pub fn dot(&self, rhs: Vec3) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
-    fn cross(&self, rhs: Vec3) -> Vec3 {
+    pub fn cross(&self, rhs: Vec3) -> Vec3 {
         Vec3 {
             x: self.y * rhs.z - self.z * rhs.y,
             y: self.z * rhs.x - self.x * rhs.z,
@@ -31,7 +32,8 @@ impl Vec3 {
         }
     }
 
-    fn unit_vector(&self) -> Vec3{
+    /// 单位向量
+    pub fn unit_vector(&self) -> Vec3{
         Vec3 {
             x: self.x / self.length(),
             y: self.y / self.length(),
@@ -85,6 +87,18 @@ impl Div<f64> for Vec3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs
+        }
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Self::Output {
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z
         }
     }
 }
