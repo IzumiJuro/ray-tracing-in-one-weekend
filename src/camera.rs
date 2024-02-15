@@ -1,4 +1,11 @@
-use crate::{hittable::Hittable, interval::Interval, ray::Ray, vec3::Vec3};
+use std::f64::INFINITY;
+
+use crate::{
+    hittable::{HitRecord, Hittable},
+    interval::Interval,
+    ray::Ray,
+    vec3::Vec3,
+};
 use rand::Rng;
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -98,6 +105,24 @@ impl Camera {
         let px = -0.5 + rand::thread_rng().gen_range(0.0..1.0);
         let py = -0.5 + rand::thread_rng().gen_range(0.0..1.0);
         px * &self.pixel_delta_u + py * &self.pixel_delta_v
+    }
+
+    /// 光线颜色
+    pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> Vec3 {
+        let rec = &mut HitRecord {
+            p: Vec3::default(),
+            normal: Vec3::default(),
+            t: 0.0,
+            front_face: false,
+        }; // 交点
+        if world.hit(r, Interval::new(0.0, INFINITY), rec) {
+            // 如果光线击中物体
+            let direction = return 0.5 * (&rec.normal + Vec3::new(1.0, 1.0, 1.0));
+            // 返回法线颜色
+        }
+        let unit_direction = r.direction.unit_vector();
+        let a = 0.5 * (unit_direction.y + 1.0);
+        (1.0 - a) * Vec3::new(1.0, 1.0, 1.0) + a * Vec3::new(0.5, 0.7, 1.0)
     }
 }
 

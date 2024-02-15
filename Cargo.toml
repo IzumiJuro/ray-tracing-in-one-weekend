@@ -6,9 +6,3 @@ edition = "2021"
 [dependencies]
 overload = "0.1.1"
 rand = "0.8.5"
-
-
-[lints.rust]
-unsafe_code = "forbid"
-
-[lints.clippy]
