@@ -1,11 +1,6 @@
-use std::f64::INFINITY;
+use crate::vec3::Vec3;
 
-use crate::{
-    hittable::{HitRecord, Hittable},
-    interval::Interval,
-    vec3::Vec3,
-};
-
+#[derive(Default)]
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,

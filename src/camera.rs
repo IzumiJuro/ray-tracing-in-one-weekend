@@ -1,8 +1,9 @@
-use std::f64::INFINITY;
+use std::{f64::INFINITY, rc::Rc};
 
 use crate::{
     hittable::{HitRecord, Hittable},
     interval::Interval,
+    material::Lambertian,
     ray::Ray,
     vec3::Vec3,
 };
@@ -11,6 +12,7 @@ pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: usize,
     pub samples_per_pixel: usize,
+    pub max_depth: usize,
     image_height: usize,
     center: Vec3,
     pixel00_loc: Vec3,
@@ -24,6 +26,7 @@ impl Default for Camera {
             aspect_ratio: 1.0,
             image_width: 100,
             samples_per_pixel: 10,
+            max_depth: 10,
             image_height: Default::default(),
             center: Vec3::default(),
             pixel00_loc: Vec3::default(),
@@ -42,18 +45,10 @@ impl Camera {
         for j in 0..self.image_height {
             eprintln!("\rScanlines remaining: {} ", self.image_height - j);
             for i in 0..self.image_width {
-                // let pixel_center = self.pixel00_loc
-                //     + (self.pixel_delta_u * i as f64)
-                //     + (self.pixel_delta_v * j as f64);
-                // let ray_direction = pixel_center - self.center;
-                // let r = Ray::new(self.center, ray_direction);
-
-                // let pixel_color = r.ray_color(world);
-                // write_color(pixel_color);
                 let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += r.ray_color(world);
+                    pixel_color += self.ray_color(&r, world, self.max_depth);
                 }
                 write_color(pixel_color, self.samples_per_pixel);
             }
@@ -108,16 +103,26 @@ impl Camera {
     }
 
     /// 光线颜色
-    pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> Vec3 {
+    pub fn ray_color(&self, r: &Ray, world: &dyn Hittable, depth: usize) -> Vec3 {
         let rec = &mut HitRecord {
             p: Vec3::default(),
             normal: Vec3::default(),
             t: 0.0,
             front_face: false,
+            mat: Rc::new(Lambertian::new(Vec3::default())),
         }; // 交点
-        if world.hit(r, Interval::new(0.0, INFINITY), rec) {
+        if depth == 0 {
+            return Vec3::new(0.0, 0.0, 0.0);
+        }
+        if world.hit(r, Interval::new(0.001, INFINITY), rec) {
             // 如果光线击中物体
-            let direction = return 0.5 * (&rec.normal + Vec3::new(1.0, 1.0, 1.0));
+            let mut scattered = Ray::default();
+            let mut attenuation = Vec3::default();
+            if rec.mat.scatter(r, rec, &mut attenuation, &mut scattered) {
+                // 如果材质发生散射
+                return attenuation * self.ray_color(&scattered, world, depth - 1);
+            }
+            return Vec3::new(0.0, 0.0, 0.0);
             // 返回法线颜色
         }
         let unit_direction = r.direction.unit_vector();
@@ -134,6 +139,10 @@ pub fn write_color(pixel_color: Vec3, samples_per_pixel: usize) {
     g *= scale;
     b *= scale;
 
+    r = linear_to_gamma(r);
+    g = linear_to_gamma(g);
+    b = linear_to_gamma(b);
+
     static INTENSITY: Interval = Interval {
         min: 0.0,
         max: 0.999,
@@ -144,4 +153,8 @@ pub fn write_color(pixel_color: Vec3, samples_per_pixel: usize) {
     let ib = (256.0 * INTENSITY.clamp(b)) as usize;
 
     println!("{ir} {ig} {ib}")
+}
+
+fn linear_to_gamma(linear_component: f64) -> f64 {
+    linear_component.sqrt()
 }

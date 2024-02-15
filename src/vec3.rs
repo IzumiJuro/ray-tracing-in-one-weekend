@@ -45,7 +45,7 @@ impl Vec3 {
     }
 
     /// 随机向量
-    pub fn random(&self) -> Vec3 {
+    fn random() -> Vec3 {
         Vec3 {
             x: rand::random::<f64>(),
             y: rand::random::<f64>(),
@@ -54,7 +54,7 @@ impl Vec3 {
     }
 
     /// 有范围的随机向量
-    pub fn random_in_range(&self, min: f64, max: f64) -> Vec3 {
+    fn random_in_range(min: f64, max: f64) -> Vec3 {
         Vec3 {
             x: min + (max - min) * rand::random::<f64>(),
             y: min + (max - min) * rand::random::<f64>(),
@@ -63,9 +63,9 @@ impl Vec3 {
     }
 
     /// 单位球内的随机向量
-    fn random_in_unit_sphere(&self) -> Vec3 {
+    fn random_in_unit_sphere() -> Vec3 {
         loop {
-            let p = self.random_in_range(-1.0, 1.0); // -1.0 ~ 1.0
+            let p = Vec3::random_in_range(-1.0, 1.0);
             if p.length_squared() < 1.0 {
                 // 半径小于1.0
                 return p;
@@ -74,19 +74,37 @@ impl Vec3 {
     }
 
     /// 单位球内的随机单位向量
-    pub fn random_unit_vector(&self) -> Vec3 {
-        self.random_in_unit_sphere().unit_vector()
+    pub fn random_unit_vector() -> Vec3 {
+        Vec3::random_in_unit_sphere().unit_vector()
     }
 
     /// 单位球内的随机单位向量
-    pub fn random_on_hemisphere(&self, normal: &Vec3) -> Vec3 {
-        let on_unit_sphere = self.random_unit_vector(); // 单位球内的随机单位向量
+    pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+        let on_unit_sphere = Vec3::random_unit_vector(); // 单位球内的随机单位向量
         if on_unit_sphere.dot(normal) > 0.0 {
             // 如果点积大于0.0，说明在半球内
             return on_unit_sphere;
         }
         // 否则取反
         -on_unit_sphere
+    }
+
+    /// 判断是否接近0
+    pub fn near_zero(&self) -> bool {
+        const S: f64 = 1e-8;
+        (self.x.abs() < S) && (self.y.abs() < S) && (self.z.abs() < S)
+    }
+
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        v - 2.0 * n.dot(v) * n
+    }
+
+    /// 折射
+    pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = (-uv).dot(n).min(1.0); // 取最小值
+        let r_out_perp = etai_over_etat * (uv + cos_theta * n); // 法线方向
+        let r_out_parallel = -(1.0 - r_out_perp.length_squared()).sqrt() * n; // 平行方向
+        r_out_parallel + r_out_perp
     }
 }
 
