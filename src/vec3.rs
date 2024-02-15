@@ -1,7 +1,5 @@
-use std::{
-    f64,
-    ops::{Add, AddAssign, Div, Mul, Neg, Sub},
-};
+use overload::overload;
+use std::ops;
 
 #[derive(Clone, Default)]
 pub struct Vec3 {
@@ -42,197 +40,65 @@ impl Vec3 {
 }
 
 // Add
-impl Add for &Vec3 {
-    type Output = Vec3;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Vec3 {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
-        }
+overload!((a: ?Vec3) + (b: ?Vec3) -> Vec3 {
+    Vec3 {
+        x: a.x + b.x,
+        y: a.y + b.y,
+        z: a.z + b.z,
     }
-}
-
-impl Add<Vec3> for &Vec3 {
-    type Output = Vec3;
-
-    fn add(self, rhs: Vec3) -> Self::Output {
-        self + &rhs
-    }
-}
-
-impl Add<&Vec3> for Vec3 {
-    type Output = Vec3;
-
-    fn add(self, rhs: &Vec3) -> Self::Output {
-        &self + rhs
-    }
-}
-
-impl Add for Vec3 {
-    type Output = Vec3;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        &self + &rhs
-    }
-}
+});
 
 // Sub
-impl Sub for &Vec3 {
-    type Output = Vec3;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Vec3 {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-            z: self.z - rhs.z,
-        }
+overload!((a: ?Vec3) - (b: ?Vec3) -> Vec3 {
+    Vec3 {
+        x: a.x - b.x,
+        y: a.y - b.y,
+        z: a.z - b.z,
     }
-}
-
-impl Sub<Vec3> for &Vec3 {
-    type Output = Vec3;
-
-    fn sub(self, rhs: Vec3) -> Self::Output {
-        self - &rhs
-    }
-}
-
-impl Sub<&Vec3> for Vec3 {
-    type Output = Vec3;
-
-    fn sub(self, rhs: &Vec3) -> Self::Output {
-        &self - rhs
-    }
-}
-
-impl Sub for Vec3 {
-    type Output = Vec3;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        &self - &rhs
-    }
-}
-
-impl Mul<f64> for &Vec3 {
-    type Output = Vec3;
-
-    fn mul(self, rhs: f64) -> Self::Output {
-        Vec3 {
-            x: self.x * rhs,
-            y: self.y * rhs,
-            z: self.z * rhs,
-        }
-    }
-}
+});
 
 // Mul
-impl Mul<&Vec3> for f64 {
-    type Output = Vec3;
-
-    fn mul(self, rhs: &Vec3) -> Self::Output {
-        Vec3 {
-            x: self * rhs.x,
-            y: self * rhs.y,
-            z: self * rhs.z,
-        }
+overload!((a: ?Vec3) * (b: ?Vec3) -> Vec3 {
+    Vec3 {
+        x: a.x * b.x,
+        y: a.y * b.y,
+        z: a.z * b.z,
     }
-}
+});
 
-impl Mul<Vec3> for f64 {
-    type Output = Vec3;
-
-    fn mul(self, rhs: Vec3) -> Self::Output {
-        self * &rhs
+overload!((a: ?Vec3) * (b: ?f64) -> Vec3 {
+    Vec3 {
+        x: a.x * b,
+        y: a.y * b,
+        z: a.z * b,
     }
-}
+});
 
-impl Mul<&Vec3> for i64 {
-    type Output = Vec3;
-
-    fn mul(self, rhs: &Vec3) -> Self::Output {
-        (self as f64) * rhs
-    }
-}
-
-impl Mul<Vec3> for i64 {
-    type Output = Vec3;
-
-    fn mul(self, rhs: Vec3) -> Self::Output {
-        self * &rhs
-    }
-}
-
-impl Mul<Vec3> for Vec3 {
-    type Output = Vec3;
-
-    fn mul(self, rhs: Vec3) -> Self::Output {
-        Vec3 {
-            x: self.x * rhs.x,
-            y: self.y * rhs.y,
-            z: self.z * rhs.z,
-        }
-    }
-}
+overload!((a: ?f64) * (b: ?Vec3) -> Vec3 {
+    b * a
+});
 
 // Div
-impl Div<f64> for &Vec3 {
-    type Output = Vec3;
-
-    fn div(self, rhs: f64) -> Self::Output {
-        Vec3 {
-            x: self.x / rhs,
-            y: self.y / rhs,
-            z: self.z / rhs,
-        }
+overload!((a: ?Vec3) / (b: ?f64) -> Vec3 {
+    Vec3 {
+        x: a.x / b,
+        y: a.y / b,
+        z: a.z / b,
     }
-}
-
-impl Div<f64> for Vec3 {
-    type Output = Vec3;
-
-    fn div(self, rhs: f64) -> Self::Output {
-        &self / rhs
-    }
-}
-
-impl Div<i64> for &Vec3 {
-    type Output = Vec3;
-
-    fn div(self, rhs: i64) -> Self::Output {
-        self / (rhs as f64)
-    }
-}
-
-impl Div<i64> for Vec3 {
-    type Output = Vec3;
-
-    fn div(self, rhs: i64) -> Self::Output {
-        &self / rhs
-    }
-}
+});
 
 // Neg
-impl Neg for &Vec3 {
-    type Output = Vec3;
-
-    fn neg(self) -> Self::Output {
-        -1 * self
+overload!(- (a: ?Vec3) -> Vec3 {
+    Vec3 {
+        x: -a.x,
+        y: -a.y,
+        z: -a.z,
     }
-}
-
-impl Neg for Vec3 {
-    type Output = Vec3;
-
-    fn neg(self) -> Self::Output {
-        -1 * &self
-    }
-}
+});
 
 // AddAssign
-impl AddAssign for Vec3 {
-    fn add_assign(&mut self, rhs: Self) {
-        *self = &*self + &rhs;
-    }
-}
+overload!((a: &mut Vec3) += (b: ?Vec3) {
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+});

@@ -4,11 +4,12 @@ mod interval;
 mod ray;
 mod sphere;
 mod vec3;
+
 use camera::Camera;
+use hittable::HittableList;
+use sphere::Sphere;
 use std::sync::Arc;
 use vec3::Vec3;
-
-use crate::{hittable::HittableList, sphere::Sphere};
 
 fn main() {
     // World

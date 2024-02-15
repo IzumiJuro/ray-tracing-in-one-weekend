@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone)]
 pub struct Interval {
     pub min: f64,
     pub max: f64,
