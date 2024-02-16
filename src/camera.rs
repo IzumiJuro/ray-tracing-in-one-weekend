@@ -9,15 +9,26 @@ use crate::{
 };
 use rand::Rng;
 pub struct Camera {
-    pub aspect_ratio: f64,
-    pub image_width: usize,
-    pub samples_per_pixel: usize,
-    pub max_depth: usize,
-    image_height: usize,
-    center: Vec3,
-    pixel00_loc: Vec3,
-    pixel_delta_u: Vec3,
-    pixel_delta_v: Vec3,
+    pub aspect_ratio: f64,        // 长宽比
+    pub image_width: usize,       // 图像宽度
+    pub samples_per_pixel: usize, // 每像素采样次数
+    pub max_depth: usize,         // 最大深度
+    pub vfov: f64,                // 视角
+    pub lookfrom: Vec3,           // 观察点
+    pub lookat: Vec3,             // 观察目标
+    pub vup: Vec3,                // 观察向上
+    pub defocus_angle: f64,       // 散焦角度
+    pub focus_dist: f64,          // 焦距
+    image_height: usize,          // 图像高度
+    center: Vec3,                 // 相机中心
+    pixel00_loc: Vec3,            // 像素00位置
+    pixel_delta_u: Vec3,          // 水平像素间隔
+    pixel_delta_v: Vec3,          // 垂直像素间隔
+    u: Vec3,                      // 水平向量
+    v: Vec3,                      // 垂直向量
+    w: Vec3,                      // 观察向量
+    defocus_disk_u: Vec3,         // 散焦盘 u
+    defocus_disk_v: Vec3,         // 散焦盘 v
 }
 
 impl Default for Camera {
@@ -27,11 +38,22 @@ impl Default for Camera {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 10,
+            vfov: 90.0,
+            lookfrom: Vec3::new(0.0, 0.0, -1.0),
+            lookat: Vec3::new(0.0, 0.0, 0.0),
+            vup: Vec3::new(0.0, 1.0, 0.0),
+            defocus_angle: 0.0,
+            focus_dist: 10.0,
             image_height: Default::default(),
             center: Vec3::default(),
             pixel00_loc: Vec3::default(),
             pixel_delta_u: Vec3::default(),
             pixel_delta_v: Vec3::default(),
+            u: Vec3::default(),
+            v: Vec3::default(),
+            w: Vec3::default(),
+            defocus_disk_u: Vec3::default(),
+            defocus_disk_v: Vec3::default(),
         }
     }
 }
@@ -64,15 +86,21 @@ impl Camera {
             self.image_height
         }; // 确保至少为 1
 
-        self.center = Vec3::new(0.0, 0.0, 0.0); // 相机中心
+        self.center = self.lookfrom.clone(); // 相机中心
 
-        let focal_length = 1.0; // 焦距
-        let viewport_height = 2.0; // 视口高度
+        let theta = self.vfov.to_radians(); // 视角
+        let h = (theta / 2.0).tan(); // 高度 h=1/2*tan(θ)
+
+        let viewport_height = 2.0 * h * self.focus_dist; // 视口高度
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64); // 视口宽度
 
+        self.w = (&self.lookfrom - &self.lookat).unit_vector(); // 观察向量
+        self.u = self.vup.cross(&self.w).unit_vector(); // 水平向量
+        self.v = self.w.cross(&self.u); // 垂直向量
+
         // Calculate the vector3 across the horizontal and down the vertical viewport
-        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0); // 水平视口
-        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0); // 垂直视口
+        let viewport_u = &self.u * viewport_width; // 水平视口
+        let viewport_v = -&self.v * viewport_height; // 垂直视口
 
         // Calculate the horizontal and vertical delta vectors from pixel to pixel
         self.pixel_delta_u = &viewport_u / self.image_width as f64; // 水平像素间隔
@@ -80,9 +108,13 @@ impl Camera {
 
         // Calculate the location of the upper left pixel
         let viewport_upper_left =
-            &self.center - viewport_u / 2.0 - viewport_v / 2.0 - Vec3::new(0.0, 0.0, focal_length); // 视口左上角
+            &self.center - (&viewport_u + &viewport_v) / 2.0 - (self.focus_dist * &self.w); // 视口左上角
         self.pixel00_loc = viewport_upper_left + (&self.pixel_delta_u + &self.pixel_delta_v) / 2.0;
         // 像素00位置
+
+        let focus_disk_radius = (self.defocus_angle / 2.0).to_radians().tan() * self.focus_dist;
+        self.defocus_disk_u = &self.u * focus_disk_radius;
+        self.defocus_disk_v = &self.v * focus_disk_radius;
     }
 
     fn get_ray(&self, i: usize, j: usize) -> Ray {
@@ -90,10 +122,19 @@ impl Camera {
             &self.pixel00_loc + (&self.pixel_delta_u * i as f64) + (&self.pixel_delta_v * j as f64);
         let pixel_sample = pixel_center + self.pixel_sample_square();
 
-        let ray_origin = self.center.clone();
-        let ray_direction = pixel_sample - &self.center;
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center.clone()
+        } else {
+            self.defocus_disk_sample()
+        };
+        let ray_direction = pixel_sample - &ray_origin;
 
         Ray::new(ray_origin, ray_direction)
+    }
+
+    fn defocus_disk_sample(&self) -> Vec3 {
+        let p = Vec3::random_in_unit_disk();
+        &self.defocus_disk_u * p.x + &self.defocus_disk_v * p.y + &self.center
     }
 
     fn pixel_sample_square(&self) -> Vec3 {

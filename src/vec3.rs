@@ -1,4 +1,5 @@
 use overload::overload;
+use rand::Rng;
 use std::ops;
 
 // 三维向量
@@ -59,6 +60,19 @@ impl Vec3 {
             x: min + (max - min) * rand::random::<f64>(),
             y: min + (max - min) * rand::random::<f64>(),
             z: min + (max - min) * rand::random::<f64>(),
+        }
+    }
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3 {
+                x: rand::thread_rng().gen_range(-1.0..1.0),
+                y: rand::thread_rng().gen_range(-1.0..1.0),
+                z: 0.0,
+            };
+            if p.length_squared() < 1.0 {
+                return p;
+            }
         }
     }
 
