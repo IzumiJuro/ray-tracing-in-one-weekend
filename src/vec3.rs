@@ -46,7 +46,7 @@ impl Vec3 {
     }
 
     /// 随机向量
-    fn random() -> Vec3 {
+    pub fn random() -> Vec3 {
         Vec3 {
             x: rand::random::<f64>(),
             y: rand::random::<f64>(),
@@ -55,7 +55,7 @@ impl Vec3 {
     }
 
     /// 有范围的随机向量
-    fn random_in_range(min: f64, max: f64) -> Vec3 {
+    pub fn random_in_range(min: f64, max: f64) -> Vec3 {
         Vec3 {
             x: min + (max - min) * rand::random::<f64>(),
             y: min + (max - min) * rand::random::<f64>(),

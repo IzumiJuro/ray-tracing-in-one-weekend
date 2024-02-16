@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 overload = "0.1.1"
 rand = "0.8.5"
+rayon = "1.8.1"
